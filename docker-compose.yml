@@ -1,0 +1,141 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - food-delivery-network
+
+  api-gateway:
+    build: ./Api-gateway-service
+    container_name: api-gateway
+    ports:
+      - "8000:3000"
+    environment:
+      - PORT=3000
+      - AUTH_SERVICE_URL=http://auth-service:3000
+      - RESTAURANT_SERVICE_URL=http://restaurant-service:3000
+      - ORDER_SERVICE_URL=http://order-service:3000
+      - DELIVERY_SERVICE_URL=http://delivery-service:3000
+      - PAYMENT_SERVICE_URL=http://payment-service:3000
+      - NOTIFICATION_SERVICE_URL=http://notification-service:3000
+    depends_on:
+      - mongodb
+      - auth-service
+      - restaurant-service
+      - order-service
+      - delivery-service
+      - payment-service
+      - notification-service
+    networks:
+      - food-delivery-network
+
+  auth-service:
+    build: ./Authentication-service
+    container_name: auth-service
+    environment:
+      - PORT=3000
+      - MONGODB_URI=mongodb://mongodb:27017/auth-service
+      - JWT_SECRET=your_jwt_secret_key
+      - JWT_EXPIRATION=24h
+    depends_on:
+      - mongodb
+    networks:
+      - food-delivery-network
+
+  restaurant-service:
+    build: ./restaurant-service
+    container_name: restaurant-service
+    environment:
+      - PORT=3000
+      - MONGODB_URI=mongodb://mongodb:27017/restaurant-service
+      - AUTH_SERVICE_URL=http://auth-service:3000
+    depends_on:
+      - mongodb
+      - auth-service
+    networks:
+      - food-delivery-network
+
+  order-service:
+    build: ./order-service
+    container_name: order-service
+    environment:
+      - PORT=3000
+      - MONGODB_URI=mongodb://mongodb:27017/order-service
+      - AUTH_SERVICE_URL=http://auth-service:3000
+      - RESTAURANT_SERVICE_URL=http://restaurant-service:3000
+      - PAYMENT_SERVICE_URL=http://payment-service:3000
+      - NOTIFICATION_SERVICE_URL=http://notification-service:3000
+    depends_on:
+      - mongodb
+      - auth-service
+      - restaurant-service
+      - payment-service
+    networks:
+      - food-delivery-network
+
+  delivery-service:
+    build: ./delivery-service
+    container_name: delivery-service
+    environment:
+      - PORT=3000
+      - MONGODB_URI=mongodb://mongodb:27017/delivery-service
+      - AUTH_SERVICE_URL=http://auth-service:3000
+      - ORDER_SERVICE_URL=http://order-service:3000
+      - NOTIFICATION_SERVICE_URL=http://notification-service:3000
+    depends_on:
+      - mongodb
+      - auth-service
+      - order-service
+    networks:
+      - food-delivery-network
+
+  payment-service:
+    build: ./payment-service
+    container_name: payment-service
+    environment:
+      - PORT=3000
+      - MONGODB_URI=mongodb://mongodb:27017/payment-service
+      - AUTH_SERVICE_URL=http://auth-service:3000
+      - ORDER_SERVICE_URL=http://order-service:3000
+      - NOTIFICATION_SERVICE_URL=http://notification-service:3000
+    depends_on:
+      - mongodb
+      - auth-service
+    networks:
+      - food-delivery-network
+
+  notification-service:
+    build: ./notification-service
+    container_name: notification-service
+    environment:
+      - PORT=3000
+      - MONGODB_URI=mongodb://mongodb:27017/notification-service
+      - AUTH_SERVICE_URL=http://auth-service:3000
+    depends_on:
+      - mongodb
+      - auth-service
+    networks:
+      - food-delivery-network
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - food-delivery-network
+
+networks:
+  food-delivery-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
