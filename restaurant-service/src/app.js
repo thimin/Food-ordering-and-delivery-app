@@ -12,6 +12,7 @@ const menuRoutes = require('./routes/menu.routes');
 
 app.use('/api/restaurants', restaurantRoutes);
 app.use('/api/menus', menuRoutes);
+app.use('/images', express.static('uploads'));
 
 app.get('/', (req, res) => res.send('Restaurant Service Running'));
 
