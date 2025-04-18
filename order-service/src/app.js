@@ -18,7 +18,7 @@ app.use(express.urlencoded({ extended: true }));
 // Database connection
 mongoose
   .connect(dbConfig.url, dbConfig.options)
-  .then(() => logger.info("Connected to MongoDB"))
+  .then(() => logger.info("MongoDB connected successfully"))
   .catch((err) => logger.error("MongoDB connection error:", err));
 
 // RabbitMQ connection
