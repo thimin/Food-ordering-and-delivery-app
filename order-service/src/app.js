@@ -19,7 +19,11 @@ app.use(express.urlencoded({ extended: true }));
 mongoose
   .connect(dbConfig.url, dbConfig.options)
   .then(() => logger.info("MongoDB connected successfully"))
-  .catch((err) => logger.error("MongoDB connection error:", err));
+  .catch((err) => {
+    logger.error("MongoDB connection error:", err.message);
+    logger.error("Connection string used:", dbConfig.url ? "***" : "UNDEFINED");
+    process.exit(1); // Exit if DB connection fails
+  });
 
 // RabbitMQ connection
 connectToRabbitMQ()
