@@ -6,10 +6,12 @@ const logger = require("../utils/logger");
 function startOrderConsumers() {
   consumeFromQueue("payment_processed", async (message) => {
     try {
-      if (message.status === "completed") {
+      if (message.status === "succeeded") {
         await orderService.updateOrder(message.orderId, {
           paymentStatus: "completed",
           status: "confirmed",
+          totalAmount: message.totalAmount,
+          deliveryFee: message.deliveryFee,
         });
         logger.info(`Order ${message.orderId} confirmed after payment`);
       } else if (message.status === "failed") {

@@ -13,7 +13,12 @@ class OrderService {
         orderId: order._id,
         userId: order.userId,
         restaurantId: order.restaurantId,
-        totalAmount: order.totalAmount,
+        menuItemId: order.items.menuItemId,
+        name: order.items.name,
+        quantity: order.items.quantity,
+        price: order.items.price,
+        specialInstructions: order.items.specialInstructions,
+        deliveryPersonId: order.deliveryPersonId,
       });
 
       logger.info(`Order created: ${order._id}`);
@@ -51,12 +56,20 @@ class OrderService {
 
       // Publish order updated event if status changed
       if (updateData.status) {
-        await publishToQueue("order_status_updated", {
-          orderId: order._id,
-          newStatus: order.status,
-          userId: order.userId,
-          restaurantId: order.restaurantId,
-        });
+        if (updateData.satus === "confirmed") {
+          await publishToQueue("order_status_updated", {
+            orderId: order._id,
+            newStatus: order.status,
+            userId: order.userId,
+            restaurantId: order.restaurantId,
+            state: order.deliveryAddress.state,
+            street: order.deliveryAddress.street,
+            city: order.deliveryAddress.city,
+            postalCode: order.deliveryAddress.postalCode,
+            deliveryPersonId: order.deliveryPersonId,
+            deliveryFee: order.deliveryFee,
+          });
+        }
       }
 
       logger.info(`Order updated: ${orderId}`);
