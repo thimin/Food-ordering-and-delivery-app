@@ -10,4 +10,7 @@ router.put('/:id', auth, controller.updateRestaurant);
 router.delete('/:id', auth, controller.deleteRestaurant);
 router.patch('/:id/availability', auth, controller.setAvailability);
 
+// router.post("/confirm-order", controller.confirmOrder);
+// router.post("/cancel-order", controller.cancelOrder);
+
 module.exports = router;
