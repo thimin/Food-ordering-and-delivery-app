@@ -7,7 +7,7 @@ const paymentSchema = new mongoose.Schema({
   currency: { type: String, default: 'usd' },
   status: {
     type: String,
-    enum: ['pending', 'succeeded', 'failed'],
+    enum: ['pending', 'succeeded', 'failed','refunded'],
     default: 'pending',
   },
   stripePaymentIntentId: { type: String },
