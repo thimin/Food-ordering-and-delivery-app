@@ -7,16 +7,16 @@ export async function startAuthConsumer() {
   consumeFromQueue("order_created", async (message) => {
     try {
       
-        await authService.updateOrder(message.orderId, {
+        await authService.createOrder(message.orderId, {
           token: message.token,
           orderId: message.orderId
         });
-        logger.info(`Order ${message.orderId} confirmed after payment`);
+        logger.info(`Token for ${message.orderId} passed`);
       
       }
       catch (error) {
       logger.error(
-        `Error processing payment_processed event: ${error.message}`
+        `Error processing the token for the OrderID: ${error.message}`
       );
     }
   });

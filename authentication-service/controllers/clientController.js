@@ -45,7 +45,7 @@ const logoutClient = async (req, res) => {
 
 // Register client
 const registerClient = async (req, res) => {
-    const { name, email, password, phone, address } = req.body;
+    const { name, email, password, phone, deliveryAddress } = req.body;
 
     try {
         // Check if client already exists
@@ -66,7 +66,15 @@ const registerClient = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        const newClient = new Client({ name, email, password: hashedPassword, phone, address });
+        const newClient = new Client({
+            name,
+            email,
+            password: hashedPassword,
+            phone,
+            deliveryAddress,
+            role: 'client'
+          });
+        
         const client = await newClient.save();
 
         const token = createToken(client._id, client.email);

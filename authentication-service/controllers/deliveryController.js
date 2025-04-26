@@ -29,7 +29,21 @@ const registerDelivery = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const newDelivery = new Delivery({ name, email, password: hashedPassword, phone, vehicle_type });
+    
+    const newDelivery = new Delivery({
+      name,
+      email,
+      password: hashedPassword,
+      phone,
+      vehicle_type,
+      deliveryAddress: {
+        postalCode: "",
+        state: "",
+        city: "",
+        street: ""
+      }
+    });
+
     const delivery = await newDelivery.save();
 
     const token = createToken(delivery._id);

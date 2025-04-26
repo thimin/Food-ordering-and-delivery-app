@@ -7,6 +7,6 @@ const clientRouter = express.Router();
 
 clientRouter.post("/register", registerClient);
 clientRouter.post("/login", loginClient);
-clientRouter.post("/logout", authMiddleware, clientValidator, logoutClient);
+clientRouter.post("/logout", authMiddleware, logoutClient);
 
 export default clientRouter;
