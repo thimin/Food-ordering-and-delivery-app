@@ -42,7 +42,7 @@ class AuthService {
       await availableDelivery.save();
 
       // Publish to RabbitMQ queue
-      await publishToQueue('auth_order_created', {
+      await publishToQueue('auth_user_found', {
         orderId: newOrder.orderId,
         clientId: newOrder.clientId,
         deliveryAddress: client.deliveryAddress,
