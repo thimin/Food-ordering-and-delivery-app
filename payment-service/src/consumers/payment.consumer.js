@@ -11,47 +11,47 @@ const startPaymentConsumer = async () => {
     return;
   }
 
-  await channel.consume('ORDER_PAYMENTS', async (msg) => {
+  await channel.consume("order_created", async (msg) => {
     const data = JSON.parse(msg.content.toString());
-    console.log('Received order for payment:', data);
+    console.log("Received order for payment:", data);
 
-    const { orderId, userId, amount } = data;
+    const { orderId, userId, totalAmount } = data;
 
     try {
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(amount * 100),
-        currency: 'usd',
+        amount: Math.round(totalAmount * 100),
+        currency: "usd",
         metadata: { orderId, userId },
       });
 
       const payment = new Payment({
         orderId,
         userId,
-        amount,
-        status: 'succeeded',
+        totalAmount,
+        status: "succeeded",
         stripePaymentIntentId: paymentIntent.id,
       });
 
       await payment.save();
 
-      console.log('Payment succeeded for order:', orderId);
+      console.log("Payment succeeded for order:", orderId);
 
       // Send to notification queue
       await sendPaymentNotification({
         orderId,
         userId,
-        amount,
-        status: 'succeeded',
+        totalAmount,
+        status: "succeeded",
       });
 
       channel.ack(msg);
     } catch (err) {
-      console.error('Payment failed:', err);
+      console.error("Payment failed:", err);
       await sendPaymentNotification({
         orderId,
         userId,
-        amount,
-        status: 'failed',
+        totalAmount,
+        status: "failed",
       });
       channel.ack(msg);
     }
