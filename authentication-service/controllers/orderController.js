@@ -21,7 +21,7 @@ export const createOrder = async (req, res) => {
 
   try {
 
-    const newOrder = await AuthService.createOrder({ orderId, token });
+    const newOrder = await AuthService.createOrder( orderId, token );
 
     logger.info(`Order created successfully: ${newOrder.orderId}`);
 
