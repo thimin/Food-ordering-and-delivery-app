@@ -13,6 +13,7 @@ const notificationSchema = new mongoose.Schema({
   ], default: "pending" },
   orderStatus: { type: String, enum: [
     "confirmed",
+    "placed",
     "preparing",
     "ready",
     "cancelled",
