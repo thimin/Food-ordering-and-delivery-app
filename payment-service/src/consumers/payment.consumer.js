@@ -1,7 +1,7 @@
 const { getChannel } = require('../config/rabbitmq.config');
 const Payment = require('../models/Payment');
 const stripe = require('../config/stripe');
-const { sendPaymentNotification } = require('../services/payment.service');
+const { sendPaymentNotification, sendPaymentOrder } = require('../services/payment.service');
 
 const startPaymentConsumer = async () => {
   const channel = getChannel();
@@ -11,7 +11,7 @@ const startPaymentConsumer = async () => {
     return;
   }
 
-  await channel.consume("order_created", async (msg) => {
+  await channel.consume("order_confirmed", async (msg) => {
     const data = JSON.parse(msg.content.toString());
     console.log("Received order for payment:", data);
 
@@ -39,8 +39,14 @@ const startPaymentConsumer = async () => {
       // Send to notification queue
       await sendPaymentNotification({
         orderId,
-        userId,
+        type: "payment",
+        to: userId,
         totalAmount,
+        paymentStatus: "succeeded",
+      });
+
+      await sendPaymentOrder({
+        orderId: orderId,
         status: "succeeded",
       });
 
@@ -49,8 +55,14 @@ const startPaymentConsumer = async () => {
       console.error("Payment failed:", err);
       await sendPaymentNotification({
         orderId,
-        userId,
+        type: "payment",
+        to: userId,
         totalAmount,
+        paymentStatus: "failed",
+      });
+
+      await sendPaymentOrder({
+        orderId: orderId,
         status: "failed",
       });
       channel.ack(msg);
