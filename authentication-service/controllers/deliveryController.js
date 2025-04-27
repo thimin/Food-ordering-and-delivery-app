@@ -35,13 +35,7 @@ const registerDelivery = async (req, res) => {
       email,
       password: hashedPassword,
       phone,
-      vehicle_type,
-      deliveryAddress: {
-        postalCode: "",
-        state: "",
-        city: "",
-        street: ""
-      }
+      vehicle_type
     });
 
     const delivery = await newDelivery.save();
