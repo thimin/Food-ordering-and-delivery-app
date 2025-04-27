@@ -7,11 +7,15 @@ import { Logger } from 'winston';
 import { Delivery } from '../models/userModel.js';
 
 class AuthService {
-  async createOrder({ orderId, token }) {
+  async createOrder(orderId, token) {
     if (!orderId || !token) {
       throw new Error('Token and Order ID are required');
     }
 
+    console.log("typeof token:", typeof token);
+    console.log("token:", token);
+
+    
     try {
       // Decode JWT token to get user ID
       const decoded = jwt.verify(token, process.env.JWT_SECRET);

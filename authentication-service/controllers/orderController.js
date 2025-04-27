@@ -12,7 +12,15 @@ export const createOrder = async (req, res) => {
     });
   }
 
+  console.log("typeof token:", typeof token);
+  console.log("token:", token);
+
+  const tokenString = token.toString();
+  console.log("typeof tokenString:", typeof tokenString);
+  console.log("tokenString:", tokenString);
+
   try {
+
     const newOrder = await AuthService.createOrder({ orderId, token });
 
     logger.info(`Order created successfully: ${newOrder.orderId}`);

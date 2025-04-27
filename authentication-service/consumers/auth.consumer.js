@@ -5,12 +5,10 @@ import logger from "../utils/logger.js";
 // Start consuming payment processed events
 export async function startAuthConsumer() {
   consumeFromQueue("order_created", async (message) => {
+    
     try {
-      
-        await authService.createOrder(message.orderId, {
-          token: message.token,
-          orderId: message.orderId
-        });
+        console.log("typeof token:", typeof message.token);
+        await authService.createOrder(message.orderId, message.token);
         logger.info(`Token for ${message.orderId} passed`);
       
       }
