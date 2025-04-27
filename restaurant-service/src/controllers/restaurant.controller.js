@@ -1,19 +1,4 @@
 const Restaurant = require('../models/restaurant.model');
-//const restaurantService = require("../services/restaurant.service");
-
-//function to update order from restaurant
-// exports.confirmOrder = async (req, res) => {
-//   const { orderId, restaurantId } = req.body;
-//   await restaurantService.confirmOrderFromRestaurant(orderId, restaurantId);
-//   res.status(200).json({ message: "Order confirmed" });
-// };
-
-// exports.cancelOrder = async (req, res) => {
-//   const { orderId, restaurantId } = req.body;
-//   await restaurantService.cancelOrderFromRestaurant(orderId, restaurantId);
-//   res.status(200).json({ message: "Order cancelled" });
-// };
-
 exports.getAllRestaurants = async (req, res) => {
     try {
         const restaurants = await Restaurant.find();
