@@ -1,4 +1,5 @@
 const { consumeFromQueue } = require("../config/rabbitmq.config");
+const { use } = require("../routes/order.routes");
 const orderService = require("../services/order.service");
 const logger = require("../utils/logger");
 
@@ -9,11 +10,9 @@ function startOrderConsumers() {
       if (message.status === "succeeded") {
         await orderService.updateOrder(message.orderId, {
           paymentStatus: "completed",
-          status: "confirmed",
-          totalAmount: message.totalAmount,
-          deliveryFee: message.deliveryFee,
+          status: "placed",
         });
-        logger.info(`Order ${message.orderId} confirmed after payment`);
+        logger.info(`Order ${message.orderId} placed after payment`);
       } else if (message.status === "failed") {
         await orderService.updateOrder(message.orderId, {
           paymentStatus: "failed",
@@ -60,6 +59,23 @@ function startOrderConsumers() {
     } catch (error) {
       logger.error(
         `Error processing delivery_status_update event: ${error.message}`
+      );
+    }
+  });
+
+  consumeFromQueue("auth_user_found", async (message) => {
+    try {
+      await orderService.updateOrder(message.orderId, {
+        userId: message.clientId,
+        deliveryPersonId: message.deliveryPersonId,
+        deliveryAddress: message.deliveryAddress,
+      });
+      logger.info(
+        `Details have been updated for order ${message.orderId} with userId ${message.clientId}`
+      );
+    } catch (error) {
+      logger.error(
+        `Error processing auth_user_found event: ${error.message}`
       );
     }
   });

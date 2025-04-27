@@ -8,18 +8,24 @@ class OrderService {
       const order = new Order(orderData);
       await order.save();
 
+      // this.getJwtToken(order)
+      logger.info(`JWT token ${order.token}`);
+
       // Publish order created event
       await publishToQueue("order_created", {
         orderId: order._id,
-        userId: order.userId,
         restaurantId: order.restaurantId,
         menuItemId: order.items.menuItemId,
         name: order.items.name,
-        quantity: order.items.quantity,
-        price: order.items.price,
-        specialInstructions: order.items.specialInstructions,
-        deliveryPersonId: order.deliveryPersonId,
+        totalAmount: order.totalAmount,
+        token: order.token,
       });
+
+      // await publishToQueue("notificationQueue", {
+      //   type: "order",
+      //   orderStatus: order.status,
+      //   to: order.userId,
+      // });
 
       logger.info(`Order created: ${order._id}`);
       return order;
@@ -56,20 +62,18 @@ class OrderService {
 
       // Publish order updated event if status changed
       if (updateData.status) {
-        if (updateData.satus === "confirmed") {
-          await publishToQueue("order_status_updated", {
-            orderId: order._id,
-            newStatus: order.status,
-            userId: order.userId,
-            restaurantId: order.restaurantId,
-            state: order.deliveryAddress.state,
-            street: order.deliveryAddress.street,
-            city: order.deliveryAddress.city,
-            postalCode: order.deliveryAddress.postalCode,
-            deliveryPersonId: order.deliveryPersonId,
-            deliveryFee: order.deliveryFee,
-          });
-        }
+        await publishToQueue("order_status_updated", {
+          orderId: order._id,
+          newStatus: order.status,
+          userId: order.userId,
+          restaurantId: order.restaurantId,
+        });
+
+        await publishToQueue("notificationQueue", {
+          type: "order",
+          orderStatus: order.status,
+          to: order.userId,
+        });
       }
 
       logger.info(`Order updated: ${orderId}`);
@@ -98,6 +102,12 @@ class OrderService {
         userId: order.userId,
         restaurantId: order.restaurantId,
         totalAmount: order.totalAmount,
+      });
+
+      await publishToQueue("notificationQueue", {
+        type: "order",
+        orderStatus: order.status,
+        to: order.userId,
       });
 
       logger.info(`Order cancelled: ${orderId}`);
@@ -139,7 +149,20 @@ class OrderService {
         orderId: order._id,
         userId: order.userId,
         restaurantId: order.restaurantId,
+        specialInstructions: order.items.specialInstructions,
         totalAmount: order.totalAmount,
+        state: order.deliveryAddress.state,
+        street: order.deliveryAddress.street,
+        city: order.deliveryAddress.city,
+        postalCode: order.deliveryAddress.postalCode,
+        deliveryPersonId: order.deliveryPersonId,
+        deliveryFee: order.deliveryFee,
+      });
+
+      await publishToQueue("notificationQueue", {
+        type: "order",
+        orderStatus: order.status,
+        to: order.userId,
       });
 
       logger.info(`Order confirmed: ${orderId}`);
@@ -160,6 +183,25 @@ class OrderService {
     } catch (error) {
       logger.error(
         `Error getting status for order ${orderId}: ${error.message}`
+      );
+      throw error;
+    }
+  }
+
+  async getJwtToken(orderId, token) {
+    try {
+      const order = await Order.findByIdAndUpdate(
+        orderId,
+        { $set: { token: token } },
+        { new: true }
+      );
+      if (!order) {
+        throw new Error("Order not found");
+      }
+      return order;
+    } catch (error) {
+      logger.error(
+        `Error getting JWT token for order ${orderId}: ${error.message}`
       );
       throw error;
     }

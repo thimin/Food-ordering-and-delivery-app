@@ -5,7 +5,7 @@ const logger = require("../utils/logger");
 
 // Validation schemas
 const createOrderSchema = Joi.object({
-  userId: Joi.string().required(),
+  userId: Joi.string(),
   restaurantId: Joi.string().required(),
   items: Joi.array()
     .items(
@@ -20,15 +20,15 @@ const createOrderSchema = Joi.object({
     .min(1)
     .required(),
   deliveryAddress: Joi.object({
-    street: Joi.string().required(),
-    city: Joi.string().required(),
-    state: Joi.string().required(),
-    postalCode: Joi.string().required(),
-    country: Joi.string().required(),
+    street: Joi.string(),
+    city: Joi.string(),
+    state: Joi.string(),
+    postalCode: Joi.string(),
+    country: Joi.string(),
   }).required(),
   totalAmount: Joi.number().min(0).required(),
   deliveryFee: Joi.number().min(0).required(),
-  taxAmount: Joi.number().min(0).required(),
+  taxAmount: Joi.number().min(0),
 });
 
 const updateOrderSchema = Joi.object({
@@ -65,6 +65,16 @@ class OrderController {
   async createOrder(req, res, next) {
     try {
       const { error, value } = createOrderSchema.validate(req.body);
+      const token  = req.headers.token;
+
+      if (!token) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({
+          error: "Authentication token missing",
+        });
+      }
+
+      value.token = token;
+      
       if (error) {
         logger.warn(`Validation error: ${error.message}`);
         return res.status(StatusCodes.BAD_REQUEST).json({
@@ -144,6 +154,23 @@ class OrderController {
       res.status(StatusCodes.OK).json(status);
     } catch (error) {
       logger.error(`Controller error in getOrderStatus: ${error.message}`);
+      next(error);
+    }
+  }
+
+  async getJwtToken(req, res, next) {
+    try {
+      const { token } = req.headers;
+      if (!token) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({
+          error: "Authentication token missing",
+        });
+      }
+
+      const order = await orderService.getJwtToken(req.params.id, token);
+      res.status(StatusCodes.OK).json(order);
+    } catch (error) {
+      logger.error(`Controller error in getJwtToken: ${error.message}`);
       next(error);
     }
   }

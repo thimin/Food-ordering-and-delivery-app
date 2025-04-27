@@ -14,5 +14,6 @@ router.delete("/:id", orderController.cancelOrder);
 router.get("/user/orders", orderController.getUserOrders);
 router.post("/:id/confirm", orderController.confirmOrder);
 router.get("/:id/status", orderController.getOrderStatus);
+router.post("/:id/getJWT", orderController.getJwtToken);
 
 module.exports = router;

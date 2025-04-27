@@ -9,7 +9,7 @@ const orderItemSchema = new mongoose.Schema({
 });
 
 const orderSchema = new mongoose.Schema({
-  userId: { type: String, required: true },
+  userId: { type: String },
   restaurantId: { type: String, required: true },
   items: [orderItemSchema],
   deliveryAddress: {
@@ -23,6 +23,7 @@ const orderSchema = new mongoose.Schema({
     enum: [
       "created",
       "confirmed",
+      "placed",
       "preparing",
       "ready",
       "picked_up",
@@ -43,6 +44,7 @@ const orderSchema = new mongoose.Schema({
   actualDeliveryTime: { type: Date },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
+  token: { type: String },
 });
 
 orderSchema.pre("save", function (next) {
