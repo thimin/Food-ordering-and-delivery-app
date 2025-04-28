@@ -1,6 +1,8 @@
-const RestaurantOrder = require("../models/restaurantOrder.model"); const { publishToQueue } = require("../config/rabbitmq.config"); const logger = require("../utils/logger");
+const RestaurantOrder = require("../models/restaurantOrder.model"); 
+const { publishToQueue } = require("../config/rabbitmq.config"); 
+const logger = require("../utils/logger");
 
-class RestaurantOrderService { async syncRestaurantOrder(orderData) { try { const { orderId, restaurantId, customerId, deliveryAddress, quantity, totalAmount, status, } = orderData;
+class RestaurantOrderService { async syncRestaurantOrder(orderData) { try { const { orderId, restaurantId, userId, deliveryAddress, quantity, totalAmount, status, } = orderData;
 let order = await RestaurantOrder.findOne({ orderId });
 
 if (order) {
@@ -9,7 +11,7 @@ if (order) {
         {
         $set: {
             restaurantId,
-            customerId,
+            userId,
             deliveryAddress,
             quantity,
             totalAmount,
@@ -24,7 +26,7 @@ if (order) {
     order = new RestaurantOrder({
         orderId,
         restaurantId,
-        customerId,
+        userId,
         deliveryAddress,
         quantity,
         totalAmount,
@@ -43,14 +45,14 @@ throw error;
 }
 }
 
-async updateRestaurantOrder(orderId, updateData) { try { const { status, restaurantId, customerId, deliveryAddress, quantity, totalAmount } = updateData;
+async updateRestaurantOrder(orderId, updateData) { try { const { status, restaurantId, userId, deliveryAddress, quantity, totalAmount } = updateData;
 const order = await RestaurantOrder.findOneAndUpdate(
     { orderId },
     {
         $set: {
             ...(status && { status }),
             ...(restaurantId && { restaurantId }),
-            ...(customerId && { customerId }),
+            ...(userId && { userId }),
             ...(deliveryAddress && { deliveryAddress }),
             ...(quantity && { quantity }),
             ...(totalAmount && { totalAmount }),
@@ -68,7 +70,7 @@ const order = await RestaurantOrder.findOneAndUpdate(
         await publishToQueue("restaurant_order_update", {
         orderId,
         restaurantId: order.restaurantId,
-        customerId: order.customerId,
+        userId: order.userId,
         newStatus: order.status,
         totalAmount: order.totalAmount,
         });

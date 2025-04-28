@@ -167,52 +167,86 @@ const logger = require("../utils/logger");
 // Start consuming restaurant-related order events
 function startRestaurantOrderConsumers() {
   // Consume order_created events
-    consumeFromQueue("order_created", async (message) => {
+    consumeFromQueue("order_placed_restaurant", async (message) => {
+        logger.info("message:", message);
         try {
         // Extract needed data from the message
-        const { orderId, restaurantId, customerId, deliveryAddress, quantity, totalAmount } = message;
+        // const { orderId, userId, restaurantId, menuItemId, specialInstructions, deliveryAddress, quantity, totalAmount } = message;
 
+        logger.info(`orderId: ${message.orderId}`);
+        logger.info(`userId: ${message.userId}`);
+        logger.info(`restaurantId: ${message.restaurantId}`);
+        logger.info(`menuItemId: ${message.menuItemId}`);
+        logger.info(`specialInstructions: ${message.specialInstructions}`);
+        logger.info(`deliveryAddress: ${message.deliveryAddress}`);
+        logger.info(`quantity: ${message.quantity}`);
+        logger.info(`totalAmount: ${message.totalAmount}`);
+        
         // Validate required fields
-        if (!orderId || !restaurantId || !customerId || !deliveryAddress || !quantity || !totalAmount) {
-            throw new Error("Missing required fields in order_created message");
+        if (!message.orderId || !message.userId || !message.restaurantId || !message.menuItemId || !message.specialInstructions || !message.deliveryAddress || !message.quantity || !message.totalAmount) {
+            throw new Error("Missing required fields in order_placed_restaurant message");
         }
 
         // Sync the restaurant order with queue data
         await restaurantOrderService.syncRestaurantOrder({
-            orderId,
-            restaurantId,
-            customerId,
-            deliveryAddress,
-            quantity,
-            totalAmount,
+            orderId: message.orderId,
+            userId: message.userId,
+            restaurantId: message.restaurantId,
+            menuItemId: message.menuItemId,
+            specialInstructions: message.specialInstructions,
+            deliveryAddress: message.deliveryAddress,
+            quantity: message.quantity,
+            totalAmount: message.totalAmount,
             status: "received"
         });
 
-        logger.info(`Order ${orderId} received by restaurant ${restaurantId} for customer ${customerId} with quantity ${quantity}`);
+        logger.info(`Order ${message.orderId} received by restaurant ${message.restaurantId} for customer ${message.userId} with quantity ${message.quantity} from menu: ${message.menuItemId}`);
         } catch (error) {
-        logger.error(`Error processing order_created event for order ${message.orderId || "unknown"}: ${error.message}`);
+        logger.error(`Error processing order_placed_restaurant event for order ${message.orderId || "unknown"}: ${error.message}`);
         }
     });
 
-    // Consume order_confirmed events
-    consumeFromQueue("order_confirmed", async (message) => {
+    // Consume order_cancelled events
+    consumeFromQueue("order_cancelled", async (message) => {
         try {
         // Extract needed data from the message
-        const { orderId, restaurantId, customerId, totalAmount } = message;
+        // const { orderId, restaurantId, userId } = message;
 
         // Validate required fields
-        if (!orderId || !restaurantId || !customerId || !totalAmount) {
-            throw new Error("Missing required fields in order_confirmed message");
+        if ( !message.orderId || !message.restaurantId || !message.userId) {
+            throw new Error("Missing required fields in order_cancelled message");
         }
 
         // Update the restaurant order status
-        await restaurantOrderService.updateRestaurantOrder(orderId, {
-            status: "preparing"
+        await restaurantOrderService.updateRestaurantOrder(message.orderId, {
+            status: "cancelled",
         });
 
-        logger.info(`Order ${orderId} confirmed and being prepared by restaurant ${restaurantId} for customer ${customerId}`);
+        logger.info(`Order cancelled: ${message.orderId} and being informed by restaurant ${message.restaurantId} for customer ${message.userId}`);
         } catch (error) {
-        logger.error(`Error processing order_confirmed event for order ${message.orderId || "unknown"}: ${error.message}`);
+        logger.error(`Error processing order_cancelled event for order ${message.orderId || "unknown"}: ${error.message}`);
+        }
+    });
+
+
+    consumeFromQueue("order_cancelled_restaurant", async (message) => {
+        try {
+        // Extract needed data from the message
+        // const { orderId, restaurantId, userId } = message;
+
+        // Validate required fields
+        if ( !message.orderId || !message.restaurantId || !message.userId) {
+            throw new Error("Missing required fields in order_cancelled_restaurant message");
+        }
+
+        // Update the restaurant order status
+        await restaurantOrderService.updateRestaurantOrder(message.orderId, {
+            status: "cancelled",
+        });
+
+        logger.info(`Order cancelled: ${message.orderId} and being informed by restaurant ${message.restaurantId} for customer ${message.userId}`);
+        } catch (error) {
+        logger.error(`Error processing order_cancelled_restaurant event for order ${message.orderId || "unknown"}: ${error.message}`);
         }
     });
 }
