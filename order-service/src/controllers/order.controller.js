@@ -19,6 +19,7 @@ const createOrderSchema = Joi.object({
     )
     .min(1)
     .required(),
+  deliveryPersonId: Joi.string(),
   deliveryAddress: Joi.object({
     street: Joi.string(),
     city: Joi.string(),
@@ -43,6 +44,7 @@ const updateOrderSchema = Joi.object({
       })
     )
     .min(1),
+  deliveryPersonId: Joi.string(),
   deliveryAddress: Joi.object({
     street: Joi.string(),
     city: Joi.string(),
@@ -53,6 +55,7 @@ const updateOrderSchema = Joi.object({
   status: Joi.string().valid(
     "created",
     "confirmed",
+    "placed",
     "preparing",
     "ready",
     "picked_up",

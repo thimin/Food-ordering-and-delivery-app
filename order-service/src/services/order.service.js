@@ -15,8 +15,9 @@ class OrderService {
       await publishToQueue("order_created", {
         orderId: order._id,
         restaurantId: order.restaurantId,
-        menuItemId: order.items.menuItemId,
-        name: order.items.name,
+        menuItemId: order.items[0]?.menuItemId,
+        quantity: order.items[0]?.quantity,
+        specialInstructions: order.items[0]?.specialInstructions,
         totalAmount: order.totalAmount,
         token: order.token,
       });
@@ -69,11 +70,68 @@ class OrderService {
           restaurantId: order.restaurantId,
         });
 
-        await publishToQueue("notificationQueue", {
-          type: "order",
-          orderStatus: order.status,
-          to: order.userId,
-        });
+        if(["confirmed", "placed", "pending", "preparing", "ready", "out-for-delivery", "cancelled"].includes(updateData.status)) { 
+          await publishToQueue("notificationQueue", {
+            type: "order",
+            orderStatus: order.status,
+            to: order.userId,
+          });
+        }
+
+        if(updateData.status === "placed") {
+          await publishToQueue("order_placed", {
+            orderId: order._id,
+            newStatus: order.status,
+            restaurantId: order.restaurantId,
+            userId: order.userId,
+            menuItemId: order.items[0]?.menuItemId,
+            quantity: order.items[0]?.quantity,
+            specialInstructions: order.items[0]?.specialInstructions,
+            deliveryAddress: order.deliveryAddress,
+            deliveryPersonId: order.deliveryPersonId,
+          });
+
+          await publishToQueue("order_placed_restaurant", {
+            orderId: order._id,
+            newStatus: order.status,
+            totalAmount: order.totalAmount,
+            restaurantId: order.restaurantId,
+            userId: order.userId,
+            menuItemId: order.items[0]?.menuItemId,
+            quantity: order.items[0]?.quantity,
+            specialInstructions: order.items[0]?.specialInstructions,
+            deliveryAddress: order.deliveryAddress,
+            deliveryPersonId: order.deliveryPersonId,
+          });
+          logger.info(`Informed delivey and restaurant services about order: ${orderId}`);
+        }
+
+        if(updateData.status === "cancelled") {
+          await publishToQueue("order_cancelled_restaurant", {
+            orderId: order._id,
+            newStatus: order.status,
+            restaurantId: order.restaurantId,
+            userId: order.userId,
+            menuItemId: order.items[0]?.menuItemId,
+            quantity: order.items[0]?.quantity,
+            specialInstructions: order.items[0]?.specialInstructions,
+            deliveryAddress: order.deliveryAddress,
+            deliveryPersonId: order.deliveryPersonId,
+          });
+
+          await publishToQueue("order_cancelled_delivery", {
+            orderId: order._id,
+            newStatus: order.status,
+            restaurantId: order.restaurantId,
+            userId: order.userId,
+            menuItemId: order.items[0]?.menuItemId,
+            quantity: order.items[0]?.quantity,
+            specialInstructions: order.items[0]?.specialInstructions,
+            deliveryAddress: order.deliveryAddress,
+            deliveryPersonId: order.deliveryPersonId,
+          });
+          logger.info(`Informed restaurant and delivery services about cancelled order: ${orderId}`);
+        }
       }
 
       logger.info(`Order updated: ${orderId}`);
@@ -100,6 +158,14 @@ class OrderService {
       await publishToQueue("order_cancelled", {
         orderId: order._id,
         userId: order.userId,
+        restaurantId: order.restaurantId,
+        totalAmount: order.totalAmount,
+      });
+
+      await publishToQueue("order_cancelled_delivery2", {
+        orderId: order._id,
+        userId: order.userId,
+        newStatus: order.status,
         restaurantId: order.restaurantId,
         totalAmount: order.totalAmount,
       });
@@ -149,12 +215,11 @@ class OrderService {
         orderId: order._id,
         userId: order.userId,
         restaurantId: order.restaurantId,
+        menuItemId: order.items.menuItemId,
+        quantity: order.items.quantity,
         specialInstructions: order.items.specialInstructions,
         totalAmount: order.totalAmount,
-        state: order.deliveryAddress.state,
-        street: order.deliveryAddress.street,
-        city: order.deliveryAddress.city,
-        postalCode: order.deliveryAddress.postalCode,
+        deliveryAddress: order.deliveryAddress,
         deliveryPersonId: order.deliveryPersonId,
         deliveryFee: order.deliveryFee,
       });
