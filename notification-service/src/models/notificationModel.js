@@ -12,6 +12,7 @@ const notificationSchema = new mongoose.Schema({
     'refunded'
   ], default: "pending" },
   orderStatus: { type: String, enum: [
+    "created",
     "confirmed",
     "placed",
     "preparing",
