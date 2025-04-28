@@ -11,7 +11,7 @@ router.post(
 router.put(
   "/:id/status",
   // authMiddleware(["delivery_person"]),
-  deliveryController.updateStatus
+  deliveryController.updateDeliveryStatus
 );
 router.put(
   "/:id/location",

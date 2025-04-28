@@ -5,17 +5,19 @@ const logger = require("../utils/logger");
 class DeliveryController {
   async assignDelivery(req, res, next) {
     try {
-      const { orderId, deliveryPersonId } = req.body;
+      const { orderId, deliveryPersonId, deliveryAddress, userId } = req.body;
 
-      if (!orderId || !deliveryPersonId) {
+      if (!orderId || !deliveryPersonId || !deliveryAddress || !userId) {
         return res.status(StatusCodes.BAD_REQUEST).json({
-          error: "orderId and deliveryPersonId are required",
+          error: "orderId, deliveryPersonId and deliveryAddress are required",
         });
       }
 
       const delivery = await deliveryService.assignDelivery(
         orderId,
-        deliveryPersonId
+        deliveryPersonId,
+        deliveryAddress,
+        userId
       );
       res.status(StatusCodes.CREATED).json(delivery);
     } catch (error) {
@@ -24,7 +26,7 @@ class DeliveryController {
     }
   }
 
-  async updateStatus(req, res, next) {
+  async updateDeliveryStatus(req, res, next) {
     try {
       const { status } = req.body;
       const { id } = req.params;

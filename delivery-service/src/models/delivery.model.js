@@ -7,8 +7,14 @@ const deliverySchema = new mongoose.Schema({
     required: true,
   },
   deliveryPersonId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: String,
     ref: "User",
+    required: true,
+  },
+
+  userId: {
+    type: String,
+    ref: "Order",
     required: true,
   },
   deliveryAddress: {
@@ -17,9 +23,10 @@ const deliverySchema = new mongoose.Schema({
     state: { type: String, required: true },
     postalCode: { type: String, required: true },
   },
+
   pickupTime: { type: Date },
   deliveryTime: { type: Date },
-  deliveryFee: { type: Number, required: true },
+  deliveryFee: { type: Number },
   status: {
     type: String,
     enum: ["assigned", "picked_up", "in_transit", "delivered", "cancelled"],
@@ -31,7 +38,10 @@ const deliverySchema = new mongoose.Schema({
       default: "Point",
       enum: ["Point"],
     },
-    coordinates: [Number], // [longitude, latitude]
+    coordinates: {
+      type: [Number],
+      default: [0, 0], // Default to (longitude 0, latitude 0)
+    }, // [longitude, latitude]
   },
   estimatedDuration: { type: Number }, // in minutes
   createdAt: { type: Date, default: Date.now },

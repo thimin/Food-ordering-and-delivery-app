@@ -3,20 +3,26 @@ const { publishToQueue } = require("../config/rabbitmq.config");
 const logger = require("../utils/logger");
 
 class DeliveryService {
-  async assignDelivery(orderId, deliveryPersonId) {
+  async assignDelivery(orderId, deliveryPersonId, deliveryAddress, userId) {
     try {
       const delivery = new Delivery({
         orderId,
         deliveryPersonId,
+        deliveryAddress,
+        userId,
         status: "assigned", 
       });
 
       await delivery.save();
 
       // Notify order service
-      await publishToQueue("delivery_assigned", {
+      await publishToQueue("notificationQueue", {
         orderId,
+        type: "delivery",
         deliveryPersonId,
+        deliveryAddress,
+        to: delivery.userId,
+        deliveryStatus: delivery.status,
         deliveryId: delivery._id,
       });
 
@@ -27,7 +33,7 @@ class DeliveryService {
     }
   }
 
-  async updateDeliveryStatus(deliveryId, status) {
+  async updateDeliveryStatus(orderId, status) {
     try {
       const validStatuses = [
         "assigned",
@@ -40,8 +46,8 @@ class DeliveryService {
         throw new Error("Invalid delivery status");
       }
 
-      const delivery = await Delivery.findByIdAndUpdate(
-        deliveryId,
+      const delivery = await Delivery.findOneAndUpdate(
+        {orderId},
         {
           status,
           ...(status === "picked_up" && { pickupTime: new Date() }),
@@ -50,11 +56,16 @@ class DeliveryService {
         { new: true }
       );
 
+      if (!delivery) {
+        throw new Error(`Delivery not found for orderId: ${orderId}`);
+      }
+
       // Notify other services
-      await publishToQueue("delivery_status_updated", {
-        deliveryId,
+      await publishToQueue("notificationQueue", {
+        type: "delivery",
         orderId: delivery.orderId,
-        status,
+        deliveryStatus: status,
+        to: delivery.userId,
       });
 
       return delivery;
@@ -64,7 +75,7 @@ class DeliveryService {
     }
   }
 
-  async updateLocation(deliveryId, coordinates) {
+  async updateLocation(orderId, coordinates) {
     try {
       const [longitude, latitude] = coordinates;
 
@@ -73,7 +84,7 @@ class DeliveryService {
       }
 
       const delivery = await Delivery.findByIdAndUpdate(
-        deliveryId,
+        orderId,
         {
           currentLocation: {
             type: "Point",
@@ -85,7 +96,6 @@ class DeliveryService {
 
       // Notify other services
       await publishToQueue("delivery_location_updated", {
-        deliveryId,
         orderId: delivery.orderId,
         coordinates,
       });
